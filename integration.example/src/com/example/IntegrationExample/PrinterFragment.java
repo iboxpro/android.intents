@@ -12,13 +12,15 @@ import android.widget.EditText;
 
 public class PrinterFragment extends Fragment {
 
+	private EditText edtIntroduce;
 	private Button btnOpenShift, btnCloseShift;
 	private EditText txtResult;
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_printer, container, false);
-		
+
+		edtIntroduce = (EditText)view.findViewById(R.id.edtIntroduce);
 		btnOpenShift = (Button)view.findViewById(R.id.btnOpenShift);
         btnCloseShift = (Button)view.findViewById(R.id.btnCloseShift);
         txtResult = (EditText)view.findViewById(R.id.txtResult);
@@ -66,6 +68,15 @@ public class PrinterFragment extends Fragment {
     	intent.putExtra("Email", getString(R.string.login));
         intent.putExtra("Password", getString(R.string.password));
         intent.putExtra("Action", "OpenShift");
+
+		try {
+			double introduce = Double.parseDouble(edtIntroduce.getText().toString());
+			if (introduce > 0d) {
+				intent.putExtra("Cash", introduce);
+			}
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		}
         startActivityForResult(intent, 503);
     }
     

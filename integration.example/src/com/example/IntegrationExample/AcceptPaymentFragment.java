@@ -1,7 +1,5 @@
 package com.example.IntegrationExample;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -16,33 +14,41 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
+
+import java.io.File;
 
 public class AcceptPaymentFragment extends Fragment {
 
-	private static final boolean TEST_CUSTOM_FIELDS	= false;
-	private static final boolean TEST_PURCHASES		= false;
-	
-	private String   mImagePath;
-	
-	private EditText edtAmount, edtDescription;
-    private EditText edtHeader, edtFooter;
-    private Button   btnSelectPhoto, btnCapturePhoto;
-    private Button   btnAcceptPayment;
-    private EditText txtResult;
-	
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View view = inflater.inflate(R.layout.fragment_payment, container, false);
-		
-		edtDescription = (EditText)view.findViewById(R.id.edtDescription);
-        edtAmount = (EditText)view.findViewById(R.id.edtAmount);
-        edtHeader = (EditText)view.findViewById(R.id.edtHeader);
-        edtFooter = (EditText)view.findViewById(R.id.edtFooter);        
-        btnCapturePhoto = (Button)view.findViewById(R.id.btnCapturePhoto);
-        btnSelectPhoto = (Button)view.findViewById(R.id.btnSelectPhoto);
-        btnAcceptPayment = (Button)view.findViewById(R.id.btnAcceptPayment);
-        txtResult = (EditText)view.findViewById(R.id.txtResult);
-		
+        private static final boolean TEST_CUSTOM_FIELDS	= false;
+        private static final boolean TEST_PURCHASES		= true;
+
+        private String   mImagePath;
+
+        private EditText edtAmount, edtDescription;
+        private EditText edtHeader, edtFooter;
+        private RadioGroup rgInputType;
+        private Button   btnSelectPhoto, btnCapturePhoto;
+        private Button   btnAcceptPayment;
+        private EditText txtResult;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_payment, container, false);
+
+            edtDescription = (EditText)view.findViewById(R.id.edtDescription);
+            edtAmount = (EditText)view.findViewById(R.id.edtAmount);
+            edtHeader = (EditText)view.findViewById(R.id.edtHeader);
+            edtFooter = (EditText)view.findViewById(R.id.edtFooter);
+            rgInputType = (RadioGroup)view.findViewById(R.id.rgInputType);
+            btnCapturePhoto = (Button)view.findViewById(R.id.btnCapturePhoto);
+            btnSelectPhoto = (Button)view.findViewById(R.id.btnSelectPhoto);
+            btnAcceptPayment = (Button)view.findViewById(R.id.btnAcceptPayment);
+            txtResult = (EditText)view.findViewById(R.id.txtResult);
+
+            edtHeader.setText(getText(R.string.default_header));
+            edtFooter.setText(getText(R.string.default_footer));
+
 		
         btnCapturePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,6 +81,7 @@ public class AcceptPaymentFragment extends Fragment {
 
                 acceptPayment(amount, description, mImagePath);
 
+
             }
         });
         		
@@ -104,6 +111,9 @@ public class AcceptPaymentFragment extends Fragment {
             if (data.getExtras().containsKey("Invoice"))
                 strResult += "Invoice : " + data.getExtras().getString("Invoice") + "\n";
 
+            if (data.getExtras().containsKey("RRN"))
+                strResult += "RRN : " + data.getExtras().getString("RRN") + "\n";
+
             if (data.getExtras().containsKey("ReceiptPhone"))
                 strResult += "ReceiptPhone : " +  data.getExtras().getString("ReceiptPhone")+ "\n";
 
@@ -122,6 +132,18 @@ public class AcceptPaymentFragment extends Fragment {
             if (data.getExtras().containsKey("Created"))
                 strResult += "Created : " +  data.getExtras().getLong("Created") + "\n";
 
+            if (data.getExtras().containsKey("FiscalPrinterSN"))
+                strResult += "FiscalPrinterSN : " +  data.getExtras().getString("FiscalPrinterSN") + "\n";
+
+            if (data.getExtras().containsKey("FiscalShift"))
+                strResult += "FiscalShift : " +  data.getExtras().getString("FiscalShift") + "\n";
+
+            if (data.getExtras().containsKey("FiscalCryptoVerifCode"))
+                strResult += "FiscalCryptoVerifCode : " +  data.getExtras().getString("FiscalCryptoVerifCode") + "\n";
+
+            if (data.getExtras().containsKey("FiscalDocSN"))
+                strResult += "FiscalDocSN : " +  data.getExtras().getString("FiscalDocSN") + "\n";
+
             txtResult.setText(strResult);
         }
 
@@ -139,14 +161,36 @@ public class AcceptPaymentFragment extends Fragment {
         //CHIP&SIGN, CHIP&PIN
         //intent.putExtra("ReaderType", "CHIP&PIN");
 
+        intent.putExtra("Email", getString(R.string.login));
+        intent.putExtra("Password", getString(R.string.password));
         intent.putExtra("Amount", amount);
+        //intent.putExtra("ReceiptEmail", "test@test.com");
+        //intent.putExtra("ReceiptPhone", "+79161112233");
         intent.putExtra("PrinterHeader", edtHeader.getText().toString());
         intent.putExtra("PrinterFooter", edtFooter.getText().toString());
-        
+
+        if (rgInputType.getCheckedRadioButtonId() != -1) {
+            String inputType = null;
+            switch (rgInputType.indexOfChild(rgInputType.findViewById(rgInputType.getCheckedRadioButtonId()))) {
+                case 0:
+                    inputType = "CARD";
+                    break;
+                case 1:
+                    inputType = "NFC";
+                    break;
+                case 2:
+                    inputType = "CASH";
+                    break;
+                case 3:
+                    inputType = "PREPAID";
+                    break;
+            }
+            if (inputType != null)
+                intent.putExtra("InputType", inputType);
+        }
+
         // Простой платеж
         if (!TEST_CUSTOM_FIELDS && !TEST_PURCHASES) {
-        	intent.putExtra("Email", getString(R.string.login));
-            intent.putExtra("Password", getString(R.string.password));
 
             intent.putExtra("Description", description);
 	        if (imagePath != null)
@@ -155,8 +199,6 @@ public class AcceptPaymentFragment extends Fragment {
 
         //Платеж с использованием продуктов
         if (TEST_CUSTOM_FIELDS) {
-            intent.putExtra("Email", getString(R.string.login));
-            intent.putExtra("Password", getString(R.string.password));
             String product = "ST00012|Product=DELIVERY|_CLIENT_NAME_=Иванов|_CONTRACT_NO_=123456";
             intent.putExtra("Product", product);
         }
@@ -164,11 +206,9 @@ public class AcceptPaymentFragment extends Fragment {
         // Простой платеж с произвольным фискальным чеком
         if (TEST_PURCHASES) {
         	try {
-                intent.putExtra("Email", getString(R.string.login));
-                intent.putExtra("Password", getString(R.string.password));
+                intent.putExtra("Description", description);
 
-                String purchases =
-                        "{"+
+              String purchases =           "{"+
                         "    \"Purchases\": [{"+
                         "    \"Title\": \"Позиция 1\","+
                         "            \"Price\": 150.25,"+
@@ -178,9 +218,11 @@ public class AcceptPaymentFragment extends Fragment {
                         "    \"Title\": \"Позиция 2\","+
                         "            \"Price\": 100.00,"+
                         "            \"Quantity\": 1,"+
-                        "           \"TaxCode\": [\"VAT1000\"]"+
+                        "           \"TaxCode\": [VAT1800]"+
                         "}]"+
                         "}";
+
+
                 intent.putExtra("Purchases", purchases);
 	        	Log.i("TEST_PURCHASES", purchases);
         	} catch (Exception e) {
@@ -206,5 +248,5 @@ public class AcceptPaymentFragment extends Fragment {
         }
         return null;
     }
-    
+
 }

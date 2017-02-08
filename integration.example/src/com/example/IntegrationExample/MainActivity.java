@@ -15,7 +15,7 @@ public class MainActivity extends FragmentActivity {
                 
         mTabHost = (FragmentTabHost)findViewById(android.R.id.tabhost);
         
-        mTabHost.setup(this, getSupportFragmentManager(), R.id.tabcontent);
+        mTabHost.setup(this, getSupportFragmentManager(), android.R.id.tabcontent);
 		
 		mTabHost.addTab(mTabHost.newTabSpec(getString(R.string.tab_accept)).setIndicator(getString(R.string.tab_accept)), 
 				AcceptPaymentFragment.class, null);

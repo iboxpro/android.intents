@@ -12,11 +12,22 @@ import android.widget.EditText;
 
 public class ReverseFragment extends Fragment {
 
+	private static final boolean TEST_REVERSE_BY_POSITIONS = true;
+
 	private EditText edtTrID;
     private EditText edtHeader, edtFooter;
     private Button   btnReturn, btnCancel;
     private EditText txtResult;
-	
+
+	private final String purchases = "{"+
+			"    \"Purchases\": [{"+
+			"    \"Title\": \"Позиция 2\","+
+			"            \"Price\": 100.00,"+
+			"            \"Quantity\": 1,"+
+			"           \"TaxCode\": [VAT1800]"+
+			"}]"+
+			"}";
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_reverse, container, false);
@@ -55,7 +66,10 @@ public class ReverseFragment extends Fragment {
         intent.putExtra("TrID", edtTrID.getText().toString());
         intent.putExtra("PrinterHeader", edtHeader.getText().toString());
         intent.putExtra("PrinterFooter", edtFooter.getText().toString());
-        
+
+		if (TEST_REVERSE_BY_POSITIONS)
+			intent.putExtra("Purchases", purchases);
+
         startActivityForResult(intent, 501);
 	}
 	
@@ -67,7 +81,10 @@ public class ReverseFragment extends Fragment {
         intent.putExtra("TrID", edtTrID.getText().toString());
         intent.putExtra("PrinterHeader", edtHeader.getText().toString());
         intent.putExtra("PrinterFooter", edtFooter.getText().toString());
-        
+
+		if (TEST_REVERSE_BY_POSITIONS)
+			intent.putExtra("Purchases", purchases);
+
         startActivityForResult(intent, 502);
 	}
 
@@ -79,6 +96,9 @@ public class ReverseFragment extends Fragment {
 
         if (data.getExtras().containsKey("Invoice"))
         	result += "Invoice : " + data.getExtras().getString("Invoice") + "\n";
+
+		if (data.getExtras().containsKey("RRN"))
+			result += "RRN : " + data.getExtras().getString("RRN") + "\n";
 
         if (data.getExtras().containsKey("ReceiptPhone"))
         	result += "ReceiptPhone : " +  data.getExtras().getString("ReceiptPhone")+ "\n";
@@ -94,7 +114,19 @@ public class ReverseFragment extends Fragment {
 
         if (data.getExtras().containsKey("Created"))
         	result += "Created : " +  data.getExtras().getLong("Created") + "\n";
-        
+
+		if (data.getExtras().containsKey("FiscalPrinterSN"))
+			result += "FiscalPrinterSN : " +  data.getExtras().getString("FiscalPrinterSN") + "\n";
+
+		if (data.getExtras().containsKey("FiscalShift"))
+			result += "FiscalShift : " +  data.getExtras().getString("FiscalShift") + "\n";
+
+		if (data.getExtras().containsKey("FiscalCryptoVerifCode"))
+			result += "FiscalCryptoVerifCode : " +  data.getExtras().getString("FiscalCryptoVerifCode") + "\n";
+
+		if (data.getExtras().containsKey("FiscalDocSN"))
+			result += "FiscalDocSN : " +  data.getExtras().getString("FiscalDocSN") + "\n";
+
         return result;
 	}
 	
@@ -108,8 +140,9 @@ public class ReverseFragment extends Fragment {
 	        	} else {
 	        		if (data != null && data.getExtras().containsKey("ErrorMessage"))
 	            		txtResult.setText(data.getExtras().getString("ErrorMessage"));
-	            	else
-	            		txtResult.setText("Payment return error");
+	            	else {
+						txtResult.setText("Payment return error");
+					}
 	        	}
 	        }
 	        
