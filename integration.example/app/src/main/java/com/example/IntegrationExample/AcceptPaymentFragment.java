@@ -48,7 +48,6 @@ public class AcceptPaymentFragment extends Fragment {
 
             edtHeader.setText(getText(R.string.default_header));
             edtFooter.setText(getText(R.string.default_footer));
-
 		
         btnCapturePhoto.setOnClickListener(new View.OnClickListener() {
             @Override

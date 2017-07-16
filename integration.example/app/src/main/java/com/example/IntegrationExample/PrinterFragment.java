@@ -20,7 +20,7 @@ public class PrinterFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_printer, container, false);
 
-		edtIntroduce = (EditText)view.findViewById(R.id.edtIntroduce);
+		// edtIntroduce = (EditText)view.findViewById(R.id.edtIntroduce); TODO
 		btnOpenShift = (Button)view.findViewById(R.id.btnOpenShift);
         btnCloseShift = (Button)view.findViewById(R.id.btnCloseShift);
         txtResult = (EditText)view.findViewById(R.id.txtResult);
