@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IntegrationExample</string>
+    
+    <string name="login"></string>
+    <string name="password"></string>
+    <string name="extID"></string>
+
+    <string name="tab_accept">Платеж</string>
+    <string name="tab_reverse">Возврат/Отмена</string>
+	<string name="tab_printer">Принтер</string>
+
+    <string name="default_header">___Пречек___</string>
+    <string name="default_footer">___Постчек___</string>
+
+    <string-array name="reader_types">
+        <item>BBPos_uEMVSwipe</item>
+        <item>BBPos_EMVSwipeBT</item>
+        <item>BBPos_WisePad</item>
+        <item>BBPos_CSwiper</item>
+        <item>BBPos_WisePad2</item>
+        <item>BBPos_WisePad2Plus</item>
+        <item>BBPos_Chipper2X</item>
+        <item>DSPREAD_QPOS</item>
+        <item>DSPREAD_QPOSAUDIO</item>
+        <item>DSPREAD_QPOSMINI</item>
+        <item>BBPos_WisePOS</item>
+        <item>UROVO_I9000S</item>
+        <item>AZUR_KS8223</item>
+    </string-array>
+</resources>
