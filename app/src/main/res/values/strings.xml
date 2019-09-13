@@ -5,6 +5,7 @@
     <string name="login"></string>
     <string name="password"></string>
     <string name="extID"></string>
+    <string name="extTID"></string>
 
     <string name="tab_accept">Платеж</string>
     <string name="tab_reverse">Возврат/Отмена</string>

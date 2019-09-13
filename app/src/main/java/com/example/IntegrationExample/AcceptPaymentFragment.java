@@ -3,6 +3,8 @@ package com.example.IntegrationExample;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,7 +14,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,25 +29,30 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 public class AcceptPaymentFragment extends Fragment {
     private String   mImagePath;
-    private EditText edtLogin, edtPassword, edtExtID, edtAmount, edtDescription, edtReceiptEmail, edtReceiptPhone;
+    private EditText edtLogin, edtPassword, edtExtID, edtExtTID, edtAmount, edtDescription, edtReceiptEmail, edtReceiptPhone;
     private EditText edtHeader, edtFooter;
-    private CheckBox cbAmount, cbOffline, cbProduct, cbAux, cbReaderType, cbPrintCopy;
+    private CheckBox cbAmount, cbSkipReceipt, cbOffline, cbProduct, cbAux, cbAuxTags, cbReaderType, cbReaderID, cbPrintCopy, cbSkipFiscalRequest;
     private RadioGroup rgInputType;
     private Button   btnSelectPhoto, btnCapturePhoto;
     private Button   btnAcceptPayment;
     private EditText txtResult;
 
-    private String product, readerType;
+    private String product, readerType, readerID, auxTags, skipReceiptMode;
     private ArrayAdapter<String> purchasesAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         readerType = null;
+        readerID = null;
         product = "";
+        auxTags = null;
         purchasesAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.test_list_item, new ArrayList<String>());
     }
 
@@ -64,8 +70,19 @@ public class AcceptPaymentFragment extends Fragment {
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 if (checked)
                     showPurchasesDialog();
-                else
+                else {
                     purchasesAdapter.clear();
+                    cbAuxTags.setChecked(false);
+                }
+            }
+        });
+        cbAuxTags.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean checked) {
+                if (checked)
+                    showTagsDialog();
+                else
+                    auxTags = null;
             }
         });
         cbProduct.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -86,6 +103,24 @@ public class AcceptPaymentFragment extends Fragment {
                     readerType = null;
             }
         });
+        cbReaderID.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    showDevicesDialog();
+                else
+                    readerID = null;
+            }
+        });
+        cbSkipReceipt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    showSkipReceiptDialog();
+                else
+                    skipReceiptMode = null;
+            }
+        });
     }
 
     @Override
@@ -93,8 +128,11 @@ public class AcceptPaymentFragment extends Fragment {
         super.onPause();
         cbAmount.setOnCheckedChangeListener(null);
         cbAux.setOnCheckedChangeListener(null);
+        cbAuxTags.setOnCheckedChangeListener(null);
         cbProduct.setOnCheckedChangeListener(null);
         cbReaderType.setOnCheckedChangeListener(null);
+        cbReaderID.setOnCheckedChangeListener(null);
+        cbSkipReceipt.setOnCheckedChangeListener(null);
     }
 
     @Override
@@ -104,17 +142,22 @@ public class AcceptPaymentFragment extends Fragment {
         edtLogin = (EditText)view.findViewById(R.id.edtLogin);
         edtPassword = (EditText)view.findViewById(R.id.edtPassword);
         edtExtID = (EditText)view.findViewById(R.id.edtExtId);
+        edtExtTID = (EditText)view.findViewById(R.id.edtExtTid);
         cbAmount = (CheckBox)view.findViewById(R.id.cbAmount);
         edtAmount = (EditText)view.findViewById(R.id.edtAmount);
         edtDescription = (EditText)view.findViewById(R.id.edtDescription);
         edtReceiptEmail = (EditText)view.findViewById(R.id.edtReceiptEmail);
         edtReceiptPhone = (EditText)view.findViewById(R.id.edtReceiptPhone);
+        cbSkipReceipt = (CheckBox)view.findViewById(R.id.cbSkipReceipt);
         edtHeader = (EditText)view.findViewById(R.id.edtHeader);
         edtFooter = (EditText)view.findViewById(R.id.edtFooter);
         cbProduct = (CheckBox)view.findViewById(R.id.cbProduct);
         cbAux = (CheckBox)view.findViewById(R.id.cbAux);
+        cbAuxTags = (CheckBox)view.findViewById(R.id.cbAuxTags);
         cbReaderType = (CheckBox)view.findViewById(R.id.cbReaderType);
+        cbReaderID = (CheckBox)view.findViewById(R.id.cbReaderId);
         cbPrintCopy = (CheckBox)view.findViewById(R.id.cbPrintCopy);
+        cbSkipFiscalRequest = (CheckBox)view.findViewById(R.id.cbSkipFiscalRequest);
         cbOffline = (CheckBox)view.findViewById(R.id.cbOffline);
         rgInputType = (RadioGroup)view.findViewById(R.id.rgInputType);
         btnCapturePhoto = (Button)view.findViewById(R.id.btnCapturePhoto);
@@ -186,10 +229,20 @@ public class AcceptPaymentFragment extends Fragment {
         }
 
         if (requestCode == 500 && resultCode != Activity.RESULT_OK) {
-        	if (data != null && data.getExtras().containsKey("ErrorMessage"))
-        		txtResult.setText(data.getExtras().getString("ErrorMessage"));
+            StringBuilder strResult = new StringBuilder();
+
+            if (data != null && data.getExtras() != null) {
+                if (data.getExtras().containsKey("ErrorCode"))
+                    strResult.append("Код ошибки: ").append(data.getExtras().getInt("ErrorCode", 0)).append("\n");
+
+                if (data.getExtras().containsKey("ErrorMessage"))
+                    strResult.append(data.getExtras().getString("ErrorMessage")).append("\n");
+                else
+                    strResult.append("Платеж не проведен!").append("\n");
+            }
         	else
-        		txtResult.setText("Платеж не проведен!");
+        	    strResult.append("Платеж не проведен!");
+            txtResult.setText(strResult.toString());
         }
 	}
 	
@@ -201,14 +254,17 @@ public class AcceptPaymentFragment extends Fragment {
         intent.putExtra("Email", edtLogin.getText().toString());
         intent.putExtra("Password", edtPassword.getText().toString());
         intent.putExtra("ExtID", edtExtID.getText().toString());
+        intent.putExtra("ExternalTerminalID", edtExtTID.getText().toString());
         intent.putExtra("Offline", cbOffline.isChecked());
         if (cbAmount.isChecked())
             intent.putExtra("Amount", amount);
         intent.putExtra("ReceiptEmail", edtReceiptEmail.getText().toString());
         intent.putExtra("ReceiptPhone", edtReceiptPhone.getText().toString());
+        intent.putExtra("SkipReceiptScr", skipReceiptMode);
         intent.putExtra("PrinterHeader", edtHeader.getText().toString());
         intent.putExtra("PrinterFooter", edtFooter.getText().toString());
         intent.putExtra("Description", description);
+        intent.putExtra("FiscalResultSkip", cbSkipFiscalRequest.isChecked());
         if (imagePath != null)
             intent.putExtra("Image", imagePath);
         if (rgInputType.getCheckedRadioButtonId() != -1) {
@@ -252,12 +308,26 @@ public class AcceptPaymentFragment extends Fragment {
                 if (i != purchasesAdapter.getCount() - 1)
                     purchases.append(",");
             }
-            purchases.append("]}");
+            purchases.append("]");
+            if (cbAuxTags.isChecked()) {
+                purchases.append(",")
+                        .append("\"Tags\":").append(auxTags);
+            }
+            purchases.append("}");
             intent.putExtra("Purchases", purchases.toString());
+        } else if (cbAuxTags.isChecked()) {
+            StringBuilder tags = new StringBuilder()
+                    .append("{")
+                    .append("\"Tags\":").append(auxTags)
+                    .append("}");
+            intent.putExtra("Purchases", tags.toString());
         }
 
         if (cbReaderType.isChecked())
             intent.putExtra("ReaderType", readerType);
+
+        if (cbReaderID.isChecked())
+            intent.putExtra("ReaderID", readerID);
 
         if (cbPrintCopy.isChecked())
             intent.putExtra("ReceiptCopy", true);
@@ -265,73 +335,76 @@ public class AcceptPaymentFragment extends Fragment {
         startActivityForResult(intent, 500);
     }
 
-    private String getResult(Intent data) {
-        String strResult = "";
+    public static String getResult(Intent data) {
+        StringBuilder strResult = new StringBuilder();
 
-        if (data.getExtras().containsKey("TransactionId"))
-            strResult += "Transaction ID : " + data.getExtras().getString("TransactionId") + "\n";
+        if (data.getExtras() != null) {
+            strResult.append("Общие параметры совершенной операции:\n");
+            if (data.getExtras().containsKey("TransactionId"))
+                strResult.append("Уникальный идентификатор транзакции в процессинге ibox: ").append("\n").append(data.getExtras().getString("TransactionId")).append("\n");
+            if (data.getExtras().containsKey("Created"))
+                strResult.append("Дата и время создания транзакции в процессинге ibox (формат UNIX time): ").append("\n").append(String.valueOf(data.getExtras().getLong("Created"))).append("\n");
+            if (data.getExtras().containsKey("CreatedDT"))
+                strResult.append("Дата и время создания транзакции в процессинге ibox (формат yyyy-mm-ddThh:mm:ss): ").append("\n").append(data.getExtras().getString("CreatedDT")).append("\n");
+            if (data.getExtras().containsKey("ClientID"))
+                strResult.append("ID клиента в системе ibox: ").append("\n").append(String.valueOf(data.getExtras().getInt("ClientID"))).append("\n");
+            if (data.getExtras().containsKey("BranchID"))
+                strResult.append("ID филиала клиента в системе ibox: ").append("\n").append(String.valueOf(data.getExtras().getInt("BranchID"))).append("\n");
+            if (data.getExtras().containsKey("PosID"))
+                strResult.append("ID агента в системе ibox: ").append("\n").append(String.valueOf(data.getExtras().getInt("PosID"))).append("\n");
+            if (data.getExtras().containsKey("Amount"))
+                strResult.append("Сумма транзакции: ").append("\n").append(String.valueOf(data.getExtras().getDouble("Amount"))).append("\n");
+            if (data.getExtras().containsKey("Invoice"))
+                strResult.append("Номер чека в процессинге ibox: ").append("\n").append(data.getExtras().getString("Invoice")).append("\n");
+            if (data.getExtras().containsKey("PaymentType"))
+                strResult.append("Тип оплаты: ").append("\n").append(data.getExtras().getString("PaymentType")).append("\n");
+            if (data.getExtras().containsKey("Description"))
+                strResult.append("Назначение (описание) платежа системы продавца: ").append("\n").append(data.getExtras().getString("Description")).append("\n");
+            if (data.getExtras().containsKey("ExtID"))
+                strResult.append("Внешний идентификатор системы продавца: ").append("\n").append(data.getExtras().getString("ExtID")).append("\n");
+            if (data.getExtras().containsKey("ReceiptPhone"))
+                strResult.append("Телефон покупателя: ").append("\n").append(data.getExtras().getString("ReceiptPhone")).append("\n");
+            if (data.getExtras().containsKey("ReceiptEmail"))
+                strResult.append("Адрес электронной почты покупателя: ").append("\n").append(data.getExtras().getString("ReceiptEmail")).append("\n");
+            if (data.getExtras().containsKey("ExternalPayment"))
+                strResult.append("Данные для оплаты внешнего платежа: ").append("\n").append(data.getExtras().getString("ExternalPayment")).append("\n");
 
-        if (data.getExtras().containsKey("Invoice"))
-            strResult += "Invoice : " + data.getExtras().getString("Invoice") + "\n";
+            strResult.append("\n\nПараметры совершенной операции по карте:\n");
+            if (data.getExtras().containsKey("IIN"))
+                strResult.append("Тип оплаты или платежной системы: ").append("\n").append(data.getExtras().getString("IIN")).append("\n");
+            if (data.getExtras().containsKey("RRN"))
+                strResult.append("Reference number: ").append("\n").append(data.getExtras().getString("RRN")).append("\n");
+            if (data.getExtras().containsKey("ApprovalCode"))
+                strResult.append("Код подтверждения транзакции: ").append("\n").append(data.getExtras().getString("ApprovalCode")).append("\n");
+            if (data.getExtras().containsKey("TerminalID"))
+                strResult.append("Терминал ID банка эквайера: ").append("\n").append(data.getExtras().getString("TerminalID")).append("\n");
+            if (data.getExtras().containsKey("AcquirerTranId"))
+                strResult.append("Уникальный идентификатор транзакции в процессинге банка: ").append("\n").append(data.getExtras().getString("AcquirerTranId")).append("\n");
+            if (data.getExtras().containsKey("PAN"))
+                strResult.append("Маскированный номер карты плательщика: ").append("\n").append(data.getExtras().getString("PAN")).append("\n");
 
-        if (data.getExtras().containsKey("RRN"))
-            strResult += "RRN : " + data.getExtras().getString("RRN") + "\n";
+            strResult.append("\n\nПараметры итогов фискализации операции:\n");
+            if (data.getExtras().containsKey("FiscalPrinterSN"))
+                strResult.append("Заводской № ККТ: ").append("\n").append(data.getExtras().getString("FiscalPrinterSN")).append("\n");
+            if (data.getExtras().containsKey("FiscalShift"))
+                strResult.append("№ кассовой смены: ").append("\n").append(data.getExtras().getString("FiscalShift")).append("\n");
+            if (data.getExtras().containsKey("FiscalCryptoVerifCode"))
+                strResult.append("КПК документа (устаревшее): ").append("\n").append(data.getExtras().getString("FiscalCryptoVerifCode")).append("\n");
+            if (data.getExtras().containsKey("FiscalDocSN"))
+                strResult.append("№ фискального чека в пределах кассовой смены: ").append("\n").append(data.getExtras().getString("FiscalDocSN")).append("\n");
+            if (data.getExtras().containsKey("FiscalPrinterRegnum"))
+                strResult.append("Регистрационный № ККТ: ").append("\n").append(data.getExtras().getString("FiscalPrinterRegnum")).append("\n");
+            if (data.getExtras().containsKey("FiscalDocumentNumber"))
+                strResult.append("№ фискального документа: ").append("\n").append(data.getExtras().getString("FiscalDocumentNumber")).append("\n");
+            if (data.getExtras().containsKey("FiscalStorageNumber"))
+                strResult.append("№ фискального накопителя: ").append("\n").append(data.getExtras().getString("FiscalStorageNumber")).append("\n");
+            if (data.getExtras().containsKey("FiscalMark"))
+                strResult.append("Фискальный признак документа: ").append("\n").append(data.getExtras().getString("FiscalMark")).append("\n");
+            if (data.getExtras().containsKey("FiscalDatetime"))
+                strResult.append("Дата и время фискализации: ").append("\n").append(data.getExtras().getString("FiscalDatetime")).append("\n");
+        }
 
-        if (data.getExtras().containsKey("ReceiptPhone"))
-            strResult += "ReceiptPhone : " +  data.getExtras().getString("ReceiptPhone")+ "\n";
-
-        if (data.getExtras().containsKey("ReceiptEmail"))
-            strResult += "ReceiptEmail : " +  data.getExtras().getString("ReceiptEmail")+ "\n";
-
-        if (data.getExtras().containsKey("PaymentType"))
-            strResult += "PaymentType : " +  data.getExtras().getString("PaymentType")+ "\n";
-
-        if (data.getExtras().containsKey("Amount"))
-            strResult += "Amount : " +  data.getExtras().getDouble("Amount")+ "\n";
-
-        if (data.getExtras().containsKey("PAN"))
-            strResult += "PAN : " +  data.getExtras().getString("PAN")+ "\n";
-
-        if (data.getExtras().containsKey("IIN"))
-            strResult += "IIN : " +  data.getExtras().getString("IIN")+ "\n";
-
-        if (data.getExtras().containsKey("Created"))
-            strResult += "Created : " +  data.getExtras().getLong("Created") + "\n";
-
-        if (data.getExtras().containsKey("FiscalPrinterSN"))
-            strResult += "FiscalPrinterSN : " +  data.getExtras().getString("FiscalPrinterSN") + "\n";
-
-        if (data.getExtras().containsKey("FiscalPrinterRN"))
-            strResult += "FiscalPrinterRN : " +  data.getExtras().getString("FiscalPrinterRN") + "\n";
-
-        if (data.getExtras().containsKey("FiscalShift"))
-            strResult += "FiscalShift : " +  data.getExtras().getString("FiscalShift") + "\n";
-
-        if (data.getExtras().containsKey("FiscalCryptoVerifCode"))
-            strResult += "FiscalCryptoVerifCode : " +  data.getExtras().getString("FiscalCryptoVerifCode") + "\n";
-
-        if (data.getExtras().containsKey("FiscalDocSN"))
-            strResult += "FiscalDocSN : " +  data.getExtras().getString("FiscalDocSN") + "\n";
-
-        if (data.getExtras().containsKey("FiscalDocumentNumber"))
-            strResult += "FiscalDocumentNumber : " +  data.getExtras().getString("FiscalDocumentNumber") + "\n";
-
-        if (data.getExtras().containsKey("FiscalStorageNumber"))
-            strResult += "FiscalStorageNumber : " +  data.getExtras().getString("FiscalStorageNumber") + "\n";
-
-        if (data.getExtras().containsKey("FiscalMark"))
-            strResult += "FiscalMark : " +  data.getExtras().getString("FiscalMark") + "\n";
-
-        if (data.getExtras().containsKey("FiscalDatetime"))
-            strResult += "FiscalDatetime : " +  data.getExtras().getString("FiscalDatetime") + "\n";
-
-        if (data.getExtras().containsKey("ExtID"))
-            strResult += "Ext ID : " + data.getExtras().getString("ExtID") + "\n";
-
-        if (data.getExtras().containsKey("ExternalPayment"))
-            strResult += "ExternalPayment : " + data.getExtras().getString("ExternalPayment") + "\n";
-
-        return strResult;
+        return strResult.toString();
     }
     
     private String getCameraImagePath() {
@@ -411,6 +484,31 @@ public class AcceptPaymentFragment extends Fragment {
                 }).create().show();
     }
 
+    private void showTagsDialog() {
+        final EditText edtTags = (EditText) LayoutInflater.from(getContext()).inflate(R.layout.dialog_purchase, null);
+        edtTags.setText(MainActivity.TEST_TAGS);
+        new AlertDialog.Builder(getContext())
+                .setView(edtTags)
+                .setPositiveButton("Применить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        try {
+                            new JSONObject(edtTags.getText().toString());
+                            auxTags = edtTags.getText().toString();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Toast.makeText(getContext(), "Ошибка!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                }).create().show();
+    }
+
     private void showSetProductDialog() {
         final EditText edtProduct = (EditText) LayoutInflater.from(getContext()).inflate(R.layout.dialog_purchase, null);
         edtProduct.setText(MainActivity.TEST_PRODUCT);
@@ -440,5 +538,44 @@ public class AcceptPaymentFragment extends Fragment {
                     }
                 })
         .create().show();
+    }
+
+    private void showDevicesDialog() {
+        final List<String> devices = new ArrayList<>();
+        BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
+        if (bt != null) {
+            Set<BluetoothDevice> bonded = bt.getBondedDevices();
+            if (bonded != null)
+                for (BluetoothDevice device : bonded)
+                    devices.add(String.format("%s\n%s", device.getName(), device.getAddress()));
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setSingleChoiceItems(devices.toArray(new String[] {}), 0, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        readerID = devices.get(which).split("\\n", 2)[1];
+                        dialog.dismiss();
+                    }
+                })
+                .create().show();
+    }
+
+    private void showSkipReceiptDialog() {
+        final LinkedHashMap<String, String> skipModes = new LinkedHashMap<>();
+        skipModes.put("Всегда пропускать", "true");
+        skipModes.put("Никогда не пропускать", "false");
+        skipModes.put("Пропускать при наличии адреса/телефона", "exist");
+
+        final String[] keys = skipModes.keySet().toArray(new String[] {});
+        new AlertDialog.Builder(getContext())
+                .setSingleChoiceItems(keys, 0, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        skipReceiptMode = skipModes.get(keys[which]);
+                        dialog.dismiss();
+                    }
+                })
+                .create().show();
     }
 }

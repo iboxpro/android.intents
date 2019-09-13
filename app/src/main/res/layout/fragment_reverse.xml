@@ -35,6 +35,21 @@
 			android:hint="Ext ID"
 			android:text="@string/extID"
 			/>
+		<EditText
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/edtExtTid"
+			android:layout_gravity="center_horizontal"
+			android:hint="External Terminal ID"
+			android:text="@string/extTID"
+			/>
+		<CheckBox
+			android:id="@+id/cbCreditVoucher"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="false"
+			android:text="Кредитный ваучер"
+			/>
 	    <EditText
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -74,6 +89,13 @@
 			android:layout_gravity="center_horizontal"
 			android:hint="Телефон для чека"
 			/>
+		<CheckBox
+			android:id="@+id/cbSkipReceipt"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="false"
+			android:text="Настройки экрана отправки чека"
+			/>
 		<EditText
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -98,6 +120,13 @@
 			android:text="Aux-товары"
 			/>
 		<CheckBox
+			android:id="@+id/cbAuxTags"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="false"
+			android:text="Aux-теги чека"
+			/>
+		<CheckBox
 			android:id="@+id/cbReaderType"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -105,11 +134,25 @@
 			android:text="Указать тип ридера"
 			/>
 		<CheckBox
+			android:id="@+id/cbReaderId"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="false"
+			android:text="Указать адрес ридера"
+			/>
+		<CheckBox
 			android:id="@+id/cbPrintCopy"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:checked="false"
 			android:text="Печать копии чека"
+			/>
+		<CheckBox
+			android:id="@+id/cbSkipFiscalRequest"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="false"
+			android:text="Пропустить запрос фискальных данных"
 			/>
 		<Button
 			android:layout_width="match_parent"
@@ -133,7 +176,7 @@
 	        android:background="@null"
 	        android:editable="false"
 	        android:inputType="textMultiLine"
-	        android:textColor="#ffffff"
+			android:textColor="@android:color/holo_green_dark"
 	        />
 	</LinearLayout>
 </ScrollView>

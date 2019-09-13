@@ -35,6 +35,14 @@
 			android:hint="Ext ID"
 			android:text="@string/extID"
 			/>
+		<EditText
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/edtExtTid"
+			android:layout_gravity="center_horizontal"
+			android:hint="External Terminal ID"
+			android:text="@string/extTID"
+			/>
 	    <Button
 			android:layout_width="match_parent"
 			android:layout_height="50dp"

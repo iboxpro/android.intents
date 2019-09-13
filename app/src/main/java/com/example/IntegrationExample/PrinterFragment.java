@@ -251,12 +251,11 @@ public class PrinterFragment extends Fragment {
 						rgInputType = (RadioGroup)view.findViewById(R.id.rgInputType);
 		final EditText edtDescription = (EditText)view.findViewById(R.id.edtDescription),
 			edtPurchases = (EditText)view.findViewById(R.id.edtAux),
-			edtCashAccepted = (EditText)view.findViewById(R.id.edtCashAccepted),
+			edtAuxTags = (EditText)view.findViewById(R.id.edtAuxTags),
+			edtAmount = (EditText)view.findViewById(R.id.edtAmount),
 			edtEmail = (EditText)view.findViewById(R.id.edtReceiptEmail);
-		StringBuilder purchases = new StringBuilder("{")
-				.append("\"Purchases\":").append("[\n")
-				.append(MainActivity.TEST_PURCHASE).append("\n]}");
-		edtPurchases.setText(purchases.toString());
+		edtPurchases.setText(MainActivity.TEST_PURCHASE);
+		edtAuxTags.setText(MainActivity.TEST_TAGS);
 		new AlertDialog.Builder(getContext())
 				.setView(view)
 				.setPositiveButton("Фискализировать", new DialogInterface.OnClickListener() {
@@ -289,14 +288,15 @@ public class PrinterFragment extends Fragment {
 							}
 						}
 						String purchases = edtPurchases.getText().toString();
+						String tags = edtAuxTags.getText().toString();
 						String email = edtEmail.getText().toString();
 						String description = edtDescription.getText().toString();
-						Double cashAccepted = null;
+						Double amount = null;
 						try {
-							cashAccepted = Double.parseDouble(edtCashAccepted.getText().toString());
+							amount = Double.parseDouble(edtAmount.getText().toString());
 						} catch (Exception e) { e.printStackTrace(); }
 
-						fiscalAction(invoiceType, inputType, purchases, email, description, cashAccepted);
+						fiscalAction(invoiceType, inputType, purchases, tags, email, description, amount);
 					}
 				})
 				.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
@@ -331,7 +331,7 @@ public class PrinterFragment extends Fragment {
         startActivityForResult(intent, 504);
     }
 
-	private void fiscalAction(String invoiceType, String inputType, String purchases, String email, String description, Double cashAccepted) {
+	private void fiscalAction(String invoiceType, String inputType, String purchases, String tags, String email, String description, Double amount) {
 		Intent intent = new Intent("ru.ibox.pro.printer");
 		setActionData(intent);
 		intent.putExtra("Action", invoiceType);
@@ -339,10 +339,18 @@ public class PrinterFragment extends Fragment {
 		//intent.putExtra("ReceiptPhone", "+79161112233");
 		if (inputType != null)
 			intent.putExtra("InputType", inputType);
-		intent.putExtra("Purchases", purchases);
+
+		StringBuilder intent_purchases = new StringBuilder("{")
+				.append("\"Purchases\":").append("[")
+				.append(purchases)
+				.append("],")
+				.append("\"Tags\":")
+				.append(tags)
+				.append("}");
+		intent.putExtra("Purchases", intent_purchases.toString());
 		intent.putExtra("Description", description);
-		if (cashAccepted != null)
-			intent.putExtra("Cash", cashAccepted);
+		if (amount != null)
+			intent.putExtra("Amount", amount);
 		startActivityForResult(intent, 505);
 	}
 

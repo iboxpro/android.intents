@@ -9,10 +9,19 @@ import java.util.Calendar;
 public class MainActivity extends FragmentActivity {
     static final String TEST_PURCHASE =
             "{"+
-                    "\n\t\"Title\": \"Позиция без ндс\","+
-                    "\n\t\"Price\": 111.256,"+
-                    "\n\t\"Quantity\": 2,"+
-                    "\n\t\"TaxCode\": []"+
+                    "\n\t\"Title\": \"Старый ключ будет проигнорирован при наличии тега\","+
+                    "\n\t\"1030\": \"Позиция без НДС\","+
+                    "\n\t\"1079\": 111.256,"+
+                    "\n\t\"1023\": 2,"+
+                    //"\n\t\"1197\": \"шт\","+
+                    "\n\t\"1199\": 6,"+
+                    "\n\t\"TitleAmount\": 230"+
+            "\n}";
+    static final String TEST_TAGS =
+            "{"+
+                    "\n\t\"1008\": \"test@integration.example\","+
+                    "\n\t\"1021\": \"EXTERNAL NAME\","+
+                    "\n\t\"1203\": \"926386062414\""+
             "\n}";
     static final String TEST_PRODUCT = "ST00012|Product=DELIVERY|_CLIENT_NAME_=Иванов|_CONTRACT_NO_=123456";
 
