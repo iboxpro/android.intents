@@ -37,7 +37,7 @@ public class AcceptPaymentFragment extends Fragment {
     private String   mImagePath;
     private EditText edtLogin, edtPassword, edtExtID, edtExtTID, edtAmount, edtDescription, edtReceiptEmail, edtReceiptPhone;
     private EditText edtHeader, edtFooter;
-    private CheckBox cbAmount, cbSkipReceipt, cbOffline, cbProduct, cbAux, cbAuxTags, cbReaderType, cbReaderID, cbPrintCopy, cbSkipFiscalRequest;
+    private CheckBox cbAmount, cbSkipReceipt, cbOffline, cbProduct, cbAux, cbAuxTags, cbReaderType, cbReaderID, cbPrintCopy, cbFiscalResult;
     private RadioGroup rgInputType;
     private Button   btnSelectPhoto, btnCapturePhoto;
     private Button   btnAcceptPayment;
@@ -157,7 +157,7 @@ public class AcceptPaymentFragment extends Fragment {
         cbReaderType = (CheckBox)view.findViewById(R.id.cbReaderType);
         cbReaderID = (CheckBox)view.findViewById(R.id.cbReaderId);
         cbPrintCopy = (CheckBox)view.findViewById(R.id.cbPrintCopy);
-        cbSkipFiscalRequest = (CheckBox)view.findViewById(R.id.cbSkipFiscalRequest);
+        cbFiscalResult = (CheckBox)view.findViewById(R.id.cbFiscalResult);
         cbOffline = (CheckBox)view.findViewById(R.id.cbOffline);
         rgInputType = (RadioGroup)view.findViewById(R.id.rgInputType);
         btnCapturePhoto = (Button)view.findViewById(R.id.btnCapturePhoto);
@@ -264,7 +264,7 @@ public class AcceptPaymentFragment extends Fragment {
         intent.putExtra("PrinterHeader", edtHeader.getText().toString());
         intent.putExtra("PrinterFooter", edtFooter.getText().toString());
         intent.putExtra("Description", description);
-        intent.putExtra("FiscalResultSkip", cbSkipFiscalRequest.isChecked());
+        intent.putExtra("FiscalResult", !cbFiscalResult.isChecked());
         if (imagePath != null)
             intent.putExtra("Image", imagePath);
         if (rgInputType.getCheckedRadioButtonId() != -1) {

@@ -31,7 +31,7 @@ public class ReverseFragment extends Fragment {
 	private EditText edtLogin, edtPassword, edtExtID, edtExtTID, edtAmount, edtReceiptEmail, edtReceiptPhone;
 	private EditText edtTrID;
     private EditText edtHeader, edtFooter;
-	private CheckBox cbCreditVoucher, cbAmount, cbSkipReceipt, cbAux, cbAuxTags, cbReaderType, cbReaderID, cbPrintCopy, cbSkipFiscalRequest;
+	private CheckBox cbCreditVoucher, cbAmount, cbSkipReceipt, cbAux, cbAuxTags, cbReaderType, cbReaderID, cbPrintCopy, cbFiscalResult;
     private Button   btnReturn, btnCancel;
     private EditText txtResult;
 
@@ -142,7 +142,7 @@ public class ReverseFragment extends Fragment {
 		cbReaderType = (CheckBox)view.findViewById(R.id.cbReaderType);
 		cbReaderID = (CheckBox)view.findViewById(R.id.cbReaderId);
 		cbPrintCopy = (CheckBox)view.findViewById(R.id.cbPrintCopy);
-		cbSkipFiscalRequest = (CheckBox)view.findViewById(R.id.cbSkipFiscalRequest);
+		cbFiscalResult = (CheckBox)view.findViewById(R.id.cbFiscalResult);
 		edtTrID = (EditText)view.findViewById(R.id.edtTrId);
         btnReturn = (Button)view.findViewById(R.id.btnReturn);
         btnCancel = (Button)view.findViewById(R.id.btnCancel);
@@ -176,7 +176,7 @@ public class ReverseFragment extends Fragment {
 		intent.putExtra("SkipReceiptScr", skipReceiptMode);
 		intent.putExtra("PrinterHeader", edtHeader.getText().toString());
 		intent.putExtra("PrinterFooter", edtFooter.getText().toString());
-		intent.putExtra("FiscalResultSkip", cbSkipFiscalRequest.isChecked());
+		intent.putExtra("FiscalResult", !cbFiscalResult.isChecked());
 		if (!cbCreditVoucher.isChecked())
 			intent.putExtra("TrID", edtTrID.getText().toString());
 		if (cbAmount.isChecked()) {

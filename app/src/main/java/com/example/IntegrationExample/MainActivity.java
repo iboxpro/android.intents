@@ -13,10 +13,16 @@ public class MainActivity extends FragmentActivity {
                     "\n\t\"1030\": \"Позиция без НДС\","+
                     "\n\t\"1079\": 111.256,"+
                     "\n\t\"1023\": 2,"+
-                    //"\n\t\"1197\": \"шт\","+
-                    "\n\t\"1199\": 6,"+
                     "\n\t\"TitleAmount\": 230"+
-            "\n}";
+            "\n}," +
+                    "{"+
+                    "\n\t\"Title\": \"Старый ключ будет проигнорирован при наличии тега\","+
+                    "\n\t\"1030\": \"Позиция без НДС\","+
+                    "\n\t\"1079\": 111.256,"+
+                    "\n\t\"1023\": 2,"+
+                    "\n\t\"TitleAmount\": 200"+
+                    "\n}"
+            ;
     static final String TEST_TAGS =
             "{"+
                     "\n\t\"1008\": \"test@integration.example\","+
