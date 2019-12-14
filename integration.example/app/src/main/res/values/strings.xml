@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IntegrationExample</string>
+    
+    <string name="login">agent@integration.demo</string>
+    <string name="password">integration123</string>
+
+    <string name="tab_accept">Платеж</string>
+    <string name="tab_reverse">Возврат/Отмена</string>
+	<string name="tab_printer">Принтер</string>
+    <string name="default_header">Default header</string>
+    <string name="default_footer">Default footer</string>
+</resources>
